@@ -7,6 +7,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/url"
 	"os"
@@ -15,6 +16,20 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+type Message struct {
+	Event string `json:"event"`
+}
+
+type Score struct {
+	Score      int    `json:"score"`
+	Competitor string `json:"competitor"`
+}
+
+type ScoreMessage struct {
+	Event  string  `json:"event"`
+	Scores []Score `json:"scores"`
+}
 
 func main() {
 
@@ -39,6 +54,20 @@ func main() {
 			if err != nil {
 				log.Println("read:", err)
 				return
+			}
+			var m Message
+			json.Unmarshal(message, &m)
+			switch m.Event {
+			case "score":
+				var score ScoreMessage
+				json.Unmarshal(message, &score)
+				comp1 := score.Scores[0]
+				comp2 := score.Scores[1]
+				log.Printf("%s %d v %s %d", comp1.Competitor, comp1.Score, comp2.Competitor, comp2.Score)
+				break
+			case "start":
+				log.Printf("start: %s", message)
+				break
 			}
 			log.Printf("recv: %s", message)
 		}
